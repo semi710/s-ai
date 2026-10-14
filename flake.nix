@@ -86,6 +86,16 @@
           # (omp compiles), instant afterwards from the local store
           checks.home-activation = testHome.activationPackage;
 
+          # docs site: `nix run .#docs -- serve` / `-- build`
+          # (CI builds the same site with mkdocs-material, see docs.yml)
+          apps.docs = {
+            type = "app";
+            program = "${pkgs.python3.withPackages (ps: [
+              ps.mkdocs
+              ps.mkdocs-material
+            ])}/bin/mkdocs";
+          };
+
           formatter = pkgs.nixfmt;
         };
     };
