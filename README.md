@@ -5,8 +5,6 @@ skills, prompts, MCP servers, providers, themes. Each agent module
 translates the canonical options into its harness's native format, so a
 plugin, provider, or MCP server is defined once and lands everywhere.
 
-Docs: <https://s-ai.semi.sh>
-
 ```
 nix run github:semi710/s-ai#omp        # try an agent binary
 nix build .#test-home                   # test host build
