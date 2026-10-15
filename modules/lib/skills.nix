@@ -5,7 +5,9 @@
 # ponytail via opencode's .mjs or pi's package system, excludes that agent so
 # skills are not double-registered). `skills.copyAllFiles` marks authored
 # skills: every file ships (checklists, templates) and front matter is
-# validated; vendored inputs ship SKILL.md only and get the duplicate check.
+# validated; `skills.symlinkDirs` ships vendored skills that carry
+# scripts/subdirs as whole-dir symlinks; other vendored inputs ship SKILL.md
+# only. Vendored inputs only get the duplicate-name check.
 {
   lib,
   plugins,
@@ -28,7 +30,14 @@ let
       dir = p.skills.dir;
       names = namesIn dir;
     in
-    if p.skills.copyAllFiles then
+    if p.skills.symlinkDirs then
+      lib.listToAttrs (
+        map (name: {
+          name = "${prefix}/${name}";
+          value.source = "${dir}/${name}";
+        }) names
+      )
+    else if p.skills.copyAllFiles then
       lib.listToAttrs (
         lib.concatMap (
           name:

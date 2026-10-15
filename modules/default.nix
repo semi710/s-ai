@@ -113,6 +113,14 @@ in
               default = false;
               description = "symlink every file in each skill dir, not just SKILL.md";
             };
+            # vendored skills that ship scripts and subdirectories (e.g.
+            # understand-anything): whole-dir symlinks, upstream-installer
+            # layout; no front-matter validation so upstream cannot wedge eval
+            skills.symlinkDirs = lib.mkOption {
+              type = lib.types.bool;
+              default = false;
+              description = "symlink each skill dir whole (for skills carrying scripts/subdirs)";
+            };
             env = lib.mkOption {
               type = lib.types.attrsOf lib.types.str;
               default = { };
