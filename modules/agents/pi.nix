@@ -29,6 +29,35 @@ let
       lib.filterAttrs (_: p: p.enable && p.piPackage != null) config.s-ai.plugins
     )
   );
+
+  # programs.mcp.servers is multi-client/opencode flavored; pi's builtin mcp
+  # extension wants its own vocabulary, so translate per server here
+  toPiServer =
+    server:
+    let
+      # pi validates: url servers take type "http"|"streamable-http" or no
+      # type at all, command servers "stdio" or none; the canonical "remote"
+      # type (and its enabled flag) must be translated away
+      remote = (server.type or "stdio") != "stdio";
+      base =
+        if remote then
+          { inherit (server) url; }
+          // lib.optionalAttrs ((server.headers or { }) != { }) { inherit (server) headers; }
+        else
+          lib.filterAttrs (n: _: !builtins.elem n [ "type" "lifecycle" "autoApprove" ]) server;
+      # pi's native mcp reads ${VAR}; the canonical layer stores
+      # opencode-flavored {env:VAR}
+      piEnv = lib.optionalAttrs (server ? env) {
+        env = lib.mapAttrs (
+          _: v:
+          if lib.hasPrefix "{env:" v && lib.hasSuffix "}" v then
+            "\${" + lib.removeSuffix "}" (lib.removePrefix "{env:" v) + "}"
+          else
+            v
+        ) server.env;
+      };
+    in
+    lib.filterAttrs (_: v: v != null) ({ exposure = "direct"; } // base // piEnv);
 in
 {
   options.s-ai.agents.pi = {
@@ -64,31 +93,7 @@ in
       # after GC. reads the same merged programs.mcp.servers as the other
       # agents, so host-level additions land in pi too.
       ".pi/agent/mcp.json".text = builtins.toJSON {
-        # 111 direct tools is deliberate; silence the adapter's token-cost
-        # advisory that re-prints on every keep-alive catalog refresh
-        settings.warnOnLargeDirectTools = false;
-        mcpServers = lib.mapAttrs (
-          _: server:
-          let
-            # pi validates: url servers take type "http"|"streamable-http" or
-            # no type at all, command servers "stdio" or none; the canonical
-            # "remote" type (and its enabled flag) must be translated away
-            remote = (server.type or "stdio") != "stdio";
-            piServer =
-              if remote then
-                { inherit (server) url; }
-                // lib.optionalAttrs ((server.headers or { }) != { }) { inherit (server) headers; }
-              else
-                lib.filterAttrs (n: _: n != "type") server;
-          in
-          lib.filterAttrs (_: v: v != null) (
-            {
-              lifecycle = "keep-alive";
-              directTools = true;
-            }
-            // piServer
-          )
-        ) config.programs.mcp.servers;
+        mcpServers = lib.mapAttrs (_: toPiServer) config.programs.mcp.servers;
       };
     };
 
