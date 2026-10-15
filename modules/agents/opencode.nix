@@ -141,7 +141,22 @@ in
 
     programs.opencode = {
       enable = true;
-      package = inputs.opencode-vim.packages.${pkgs.stdenv.hostPlatform.system}.default;
+      package =
+        let
+          pkg = inputs.opencode-vim.packages.${pkgs.stdenv.hostPlatform.system}.default;
+        in
+        # upstream build.ts ad-hoc re-signs darwin binaries (macOS 27+) but
+        # stdenvNoCC has no codesign on PATH; sigtool provides codesign,
+        # cctools its codesign_allocate helper
+        if pkgs.stdenv.hostPlatform.isDarwin then
+          pkg.overrideAttrs (old: {
+            nativeBuildInputs = (old.nativeBuildInputs or [ ]) ++ [
+              pkgs.darwin.sigtool
+              pkgs.cctools
+            ];
+          })
+        else
+          pkg;
       enableMcpIntegration = true;
       web = {
         enable = lib.mkDefault false;
