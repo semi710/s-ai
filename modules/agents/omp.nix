@@ -24,11 +24,15 @@ let
     omp = inputs.omp;
     # accepts any palette attrset - raw config.lib.stylix.colors or a plain
     # base16 set; only the baseXX hex keys feed the theme
-    palette = lib.filterAttrs (n: _: builtins.match "base[0-9A-F]{2}" n != null) config.s-ai.theme.palette;
+    palette = lib.filterAttrs (
+      n: _: builtins.match "base[0-9A-F]{2}" n != null
+    ) config.s-ai.theme.palette;
   };
 
   # enabled providers, rendered into omp's models.yml
-  providers = lib.filterAttrs (_: p: p.enable) config.s-ai.providers;
+  providers = lib.filterAttrs (
+    _: p: p.enable && builtins.elem "openai" p.protocols
+  ) config.s-ai.providers;
   defaultProvider = config.s-ai.providers.${config.s-ai.defaultProvider};
 
   # omp's mcp.json schema is strict (additionalProperties: false): stdio

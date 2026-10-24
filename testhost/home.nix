@@ -15,6 +15,11 @@
   s-ai.providers.example = {
     baseUrl = "http://localhost:8080/v1";
     apiKeyEnv = "EXAMPLE_API_KEY";
+    # dual-protocol gateway shape (e.g. LiteLLM), like a real anthropic feed
+    protocols = [
+      "openai"
+      "anthropic"
+    ];
     models = [
       "model-large"
       "model-fast"
@@ -26,6 +31,9 @@
   # exercise the advisor/smol role options
   s-ai.agents.omp.advisorModel = "example/model-large";
   s-ai.agents.omp.smolModel = "example/model-fast";
+
+  # claude agent: unfree package, single-endpoint anthropic protocol
+  s-ai.agents.claude.enable = true;
 
   # option playground - uncomment to test:
   # s-ai.plugins.workmux.enable = true;

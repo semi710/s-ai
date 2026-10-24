@@ -136,6 +136,9 @@ let
 
     # ~/.omp/agent/skills/
     ompFiles = filesFor "omp" ".omp/agent/skills";
+
+    # ~/.claude/skills/
+    claudeFiles = filesFor "claude" ".claude/skills";
   };
 in
 lib.throwIf (badAuthoredSkills != [ ])
@@ -147,9 +150,13 @@ lib.throwIf (badAuthoredSkills != [ ])
         lib.throwIf (duplicatedName "pi" != null)
           "s-ai: duplicate skill name for pi: ${duplicatedName "pi"}"
           (
-            lib.throwIf (
-              duplicatedName "omp" != null
-            ) "s-ai: duplicate skill name for omp: ${duplicatedName "omp"}" rendered
+            lib.throwIf (duplicatedName "omp" != null)
+              "s-ai: duplicate skill name for omp: ${duplicatedName "omp"}"
+              (
+                lib.throwIf (
+                  duplicatedName "claude" != null
+                ) "s-ai: duplicate skill name for claude: ${duplicatedName "claude"}" rendered
+              )
           )
       )
   )

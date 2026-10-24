@@ -1,6 +1,6 @@
 # s-ai
 
-Coding agents (opencode, oh-my-pi, pi) with one shared canonical layer:
+Coding agents (opencode, oh-my-pi, pi, claude) with one shared canonical layer:
 skills, prompts, MCP servers, providers, themes. Each agent module
 translates the canonical options into its harness's native format, so a
 plugin, provider, or MCP server is defined once and lands everywhere.
@@ -28,12 +28,17 @@ enter the store - only env-var names are rendered.
 s-ai.providers.example = {
   baseUrl = "https://your-openai-compatible-grid.example";
   apiKeyEnv = "EXAMPLE_API_KEY";    # export the value yourself (sops, etc.)
+  protocols = [ "openai" "anthropic" ];  # default [ "openai" ]; anthropic feeds claude
   models = [ "model-large" "model-fast" ];
   defaultModel = "model-large";
 };
 s-ai.defaultProvider = "example";
 s-ai.theme.palette = config.lib.stylix.colors;  # optional: raw stylix colors work as-is
 ```
+
+The claude agent is opt-in (`s-ai.agents.claude.enable = true`) and needs
+the unfree `claude-code` package allowed in `nixpkgs.config`, or substitute
+your own build via `s-ai.agents.claude.package`.
 
 ## Options
 
@@ -53,6 +58,9 @@ s-ai.theme.palette = config.lib.stylix.colors;  # optional: raw stylix colors wo
 | `s-ai.agents.pi.vimMotions` | `true` | vim-motions-pi plugin (jk escape, OSC 52 yank) |
 | `s-ai.agents.pi.clipboardCommand` | `null` | OSC 52 command for vim-motions (your `copy` tool) |
 | `s-ai.agents.pi.extraSettings` | `{}` | deep-merged last into pi settings |
+| `s-ai.agents.claude.enable` | `false` | claude (writes `~/.claude`) - opt-in, unfree package |
+| `s-ai.agents.claude.package` | `pkgs.claude-code` | claude-code package override |
+| `s-ai.agents.claude.extraSettings` | `{}` | deep-merged last into `~/.claude/settings.json` |
 | `s-ai.agents.opencode.omo` | `true` | oh-my-openagent (Sisyphus agent system) |
 | `s-ai.agents.opencode.extraSettings` | `{}` | deep-merged last into opencode settings |
 | `s-ai.agents.opencode.extraOmoConfig` | `{}` | deep-merged last into `~/.omo/omo.jsonc` |
@@ -78,7 +86,7 @@ s-ai.plugins.workmux.enable = true;
 s-ai.plugins.my-tools = {
   enable = true;
   skills.dir = ./my-skills;             # <name>/SKILL.md dirs
-  skills.agents = [ "omp" "pi" ];       # default: all three
+  skills.agents = [ "omp" "pi" ];       # default: all four
   skills.copyAllFiles = true;           # ship every file + validate front matter
   env.MY_TOOL_MODE = "1";               # exported while enabled
 };
@@ -104,9 +112,12 @@ s-ai.mcp.servers.my-work-tool = {
 
 ### Providers
 
-`s-ai.providers.<name>` (openai-compatible grids): `baseUrl`, `apiKeyEnv`,
-`timeout`, `models`, `defaultModel`. Rendered into all three agents.
-`s-ai.defaultProvider` picks the grid the agents default to.
+`s-ai.providers.<name>` (LLM gateways): `baseUrl`, `apiKeyEnv`, `protocols`,
+`timeout`, `models`, `defaultModel`. `protocols = [ "openai" ]` (the
+default) renders into pi/omp/opencode; add `"anthropic"` for claude (a
+gateway like LiteLLM can serve both from one `baseUrl`).
+`s-ai.defaultProvider` picks the grid the agents default to; claude uses it
+as its single endpoint.
 
 ### Prompts
 
@@ -124,7 +135,10 @@ s-ai.prompts.builtin = false;           # ship only your own set
 ## Declarative / imperative posture
 
 Read-only data (skills, mcp.json, models, themes, AGENTS.md) renders as
-store symlinks - agents read them, they cannot rot. Agent-editable settings
+store symlinks - agents read them, they cannot rot. claude's
+`~/.claude.json` gets its `mcpServers` merged at activation instead: the
+file is claude's live state, so a symlink would freeze it and a copy would
+clobber it. Agent-editable settings
 (omp's `config.yml`) render as a writable copy: runtime changes (e.g. omp's
 `/settings`) work and survive until the next switch, which re-asserts the
 declared values.

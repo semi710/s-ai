@@ -20,7 +20,9 @@ let
     plugins = lib.filterAttrs (_: p: p.enable) config.s-ai.plugins;
   };
 
-  providers = lib.filterAttrs (_: p: p.enable) config.s-ai.providers;
+  providers = lib.filterAttrs (
+    _: p: p.enable && builtins.elem "openai" p.protocols
+  ) config.s-ai.providers;
   defaultProvider = config.s-ai.providers.${config.s-ai.defaultProvider};
 
   # pi packages from plugins that load through pi's package system
@@ -41,10 +43,19 @@ let
       remote = (server.type or "stdio") != "stdio";
       base =
         if remote then
-          { inherit (server) url; }
+          {
+            inherit (server) url;
+          }
           // lib.optionalAttrs ((server.headers or { }) != { }) { inherit (server) headers; }
         else
-          lib.filterAttrs (n: _: !builtins.elem n [ "type" "lifecycle" "autoApprove" ]) server;
+          lib.filterAttrs (
+            n: _:
+            !builtins.elem n [
+              "type"
+              "lifecycle"
+              "autoApprove"
+            ]
+          ) server;
       # pi's native mcp reads ${VAR}; the canonical layer stores
       # opencode-flavored {env:VAR}
       piEnv = lib.optionalAttrs (server ? env) {

@@ -1,14 +1,18 @@
 # Agents
 
-s-ai configures three coding agents from a shared canonical layer.
+s-ai configures four coding agents from a shared canonical layer.
 
 | Agent | Home dir | Package source |
 |---|---|---|
 | **opencode** | `~/.config/opencode` | `opencode-vim` fork (`@ai-sdk/openai-compatible`) |
 | **omp** (oh-my-pi) | `~/.omp/agent` | oh-my-pi flake |
 | **pi** | `~/.pi/agent` | `llm-agents.pi` |
+| **claude** (Claude Code) | `~/.claude` | nixpkgs `claude-code` (**unfree**) |
 
-Each enabled by default; disable per consumer with `s-ai.agents.<name>.enable = false`.
+opencode/omp/pi are enabled by default. claude is opt-in: it pulls the
+unfree `claude-code` package, so allow it in `nixpkgs.config` or substitute
+`s-ai.agents.claude.package`. Disable per consumer with
+`s-ai.agents.<name>.enable = false`.
 
 ## opencode
 
@@ -61,5 +65,28 @@ Options:
 | `s-ai.agents.pi.clipboardCommand` | `null` | OSC 52 command (e.g. `pkgs.copy`) |
 | `s-ai.agents.pi.extraSettings` | `{}` | deep-merged last into pi settings |
 
-All agents share the same canonical prompts (`AGENTS.md`), skills
-(per-plugin routing), MCP servers, providers, and (for omp) theme.
+## claude (Claude Code)
+
+- speaks the **Anthropic Messages API** against a single endpoint: the
+  default provider drives `ANTHROPIC_BASE_URL`, `model` and `apiKeyHelper`
+  (the key stays out of the store). The provider must declare
+  `protocols = [ ... "anthropic" ]`
+- `~/.claude/settings.json` rendered declaratively (store symlink)
+- `~/.claude/CLAUDE.md` gets the same combined prompts as every agent's
+  AGENTS.md
+- user-scope MCP is **merged** into `~/.claude.json` (claude's live state
+  file - `settings.json` cannot carry MCP, and a symlink would freeze the
+  state)
+- skills symlinked to `~/.claude/skills` (the vendored frontend-design
+  skill returns home)
+
+Options:
+
+| Option | Default | Description |
+|---|---|---|
+| `s-ai.agents.claude.enable` | `false` | claude (opt-in: unfree package) |
+| `s-ai.agents.claude.package` | `pkgs.claude-code` | substitute your own build |
+| `s-ai.agents.claude.extraSettings` | `{}` | deep-merged last into `~/.claude/settings.json` |
+
+All agents share the same canonical prompts (`AGENTS.md`/`CLAUDE.md`),
+skills (per-plugin routing), MCP servers, providers, and (for omp) theme.

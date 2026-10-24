@@ -56,10 +56,13 @@ Each harness's MCP config schema differs:
 - **pi** validates: url servers take `type` = `"http"`/`"streamable-http"` or
   no `type` at all; command servers take `"stdio"` or none. The canonical
   `type = "remote"` is translated away to `{ url, headers? }`.
+- **claude** takes `command`/`args`/`env` for stdio and `type = "http"` for
+  remote; harness-only keys are stripped, `{env:VAR}` becomes `${VAR}`
+  substitution, and the set merges into `~/.claude.json`'s `mcpServers`.
 
 Host-level `programs.mcp.servers` additions merge into the canonical set and
 land in every agent, so a workstation-level `bitbucket` server reaches all
-three.
+four.
 
 ## Declarative / imperative posture
 

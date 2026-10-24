@@ -57,10 +57,18 @@
       perSystem =
         {
           inputs',
-          pkgs,
+          system,
           ...
         }:
         let
+          # claude-code is unfree; allow just it here so the module's test
+          # build and `nix build .#claude-code` work. Consumers of
+          # homeModules.s-ai allow it in their own nixpkgs.config (or set
+          # agents.claude.package).
+          pkgs = import "${inputs.nixpkgs}" {
+            inherit system;
+            config.allowUnfreePredicate = p: inputs.nixpkgs.lib.getName p == "claude-code";
+          };
           # scratch consumer build, proving the module works standalone:
           # `nix build .#test-home`
           testHome = inputs.home-manager.lib.homeManagerConfiguration {
@@ -78,6 +86,7 @@
             pi = inputs'.llm-agents.packages.pi;
             opencode = inputs'.opencode-vim.packages.default;
             oh-my-opencode = inputs'.llm-agents.packages.oh-my-opencode;
+            claude-code = pkgs.claude-code;
             default = inputs'.omp.packages.default;
             test-home = testHome.activationPackage;
           };
@@ -90,10 +99,12 @@
           # (CI builds the same site with mkdocs-material, see docs.yml)
           apps.docs = {
             type = "app";
-            program = "${pkgs.python3.withPackages (ps: [
-              ps.mkdocs
-              ps.mkdocs-material
-            ])}/bin/mkdocs";
+            program = "${
+              pkgs.python3.withPackages (ps: [
+                ps.mkdocs
+                ps.mkdocs-material
+              ])
+            }/bin/mkdocs";
           };
 
           formatter = pkgs.nixfmt;

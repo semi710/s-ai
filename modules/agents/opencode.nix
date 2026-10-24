@@ -18,7 +18,9 @@ let
     plugins = lib.filterAttrs (_: p: p.enable) config.s-ai.plugins;
   };
 
-  providers = lib.filterAttrs (_: p: p.enable) config.s-ai.providers;
+  providers = lib.filterAttrs (
+    _: p: p.enable && builtins.elem "openai" p.protocols
+  ) config.s-ai.providers;
   defaultProvider = config.s-ai.providers.${config.s-ai.defaultProvider};
   defaultModel = "${config.s-ai.defaultProvider}/${defaultProvider.defaultModel}";
 
@@ -181,19 +183,21 @@ in
                 let
                   id = if builtins.isString m then m else m.id;
                 in
-                lib.nameValuePair id ({
-                  name = id;
-                  modalities = {
-                    input = [
-                      "text"
-                      "image"
-                    ];
-                    output = [ "text" ];
-                  };
-                }
-                // lib.optionalAttrs (if builtins.isString m then false else m.contextWindow != null) {
-                  contextWindow = if builtins.isString m then null else m.contextWindow;
-                })
+                lib.nameValuePair id (
+                  {
+                    name = id;
+                    modalities = {
+                      input = [
+                        "text"
+                        "image"
+                      ];
+                      output = [ "text" ];
+                    };
+                  }
+                  // lib.optionalAttrs (if builtins.isString m then false else m.contextWindow != null) {
+                    contextWindow = if builtins.isString m then null else m.contextWindow;
+                  }
+                )
               ) p.models
             );
           }) providers;

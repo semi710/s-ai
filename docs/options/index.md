@@ -22,6 +22,9 @@ config under `s-ai.*`; secrets never enter the store (only env-var names).
 | `s-ai.agents.pi.vimMotions` | `true` | vim-motions-pi plugin |
 | `s-ai.agents.pi.clipboardCommand` | `null` | OSC 52 command for vim-motions |
 | `s-ai.agents.pi.extraSettings` | `{}` | deep-merges last into pi settings |
+| `s-ai.agents.claude.enable` | `false` | claude (opt-in: unfree claude-code) |
+| `s-ai.agents.claude.package` | `pkgs.claude-code` | claude-code package override |
+| `s-ai.agents.claude.extraSettings` | `{}` | deep-merges last into `~/.claude/settings.json` |
 
 ## Plugins
 
@@ -44,7 +47,7 @@ s-ai.plugins.workmux.enable = true;
 s-ai.plugins.my-tools = {
   enable = true;
   skills.dir = ./my-skills;             # <name>/SKILL.md dirs
-  skills.agents = [ "omp" "pi" ];       # default: all three
+  skills.agents = [ "omp" "pi" ];       # default: all four
   skills.copyAllFiles = true;           # ship every file + validate front matter
   env.MY_TOOL_MODE = "1";               # exported while enabled
   opencodePlugin = ./plugin.mjs;        # opencode loads this instead of symlinking
@@ -75,13 +78,17 @@ The canonical `type = "remote"` is translated per harness; see
 
 ## Providers
 
-`providers` are openai-compatible grids rendered into all three agents.
-Secrets are env-var names only (`apiKeyEnv`); the consumer exports values.
+`providers` are LLM gateways rendered into the agents. `protocols` declares
+which wire protocols the endpoint serves: `openai` (default) feeds
+pi/omp/opencode, `anthropic` feeds claude - a gateway like LiteLLM often
+serves both from one `baseUrl`. Secrets are env-var names only
+(`apiKeyEnv`); the consumer exports values.
 
 ```nix
 s-ai.providers.my-grid = {
   baseUrl = "https://grid.example";
   apiKeyEnv = "MY_API_KEY";
+  protocols = [ "openai" "anthropic" ]; # default [ "openai" ]
   timeout = 600000;
   models = [
     # a bare id (omp falls back to its 128k context default)
@@ -99,6 +106,10 @@ s-ai.defaultProvider = "my-grid";
 and opencode's model blocks. Without them omp shows 128k - often wrong for
 the served model; this repository's examples always set them from the grid's
 `/v1/models` (`max_input_tokens`/`max_output_tokens`).
+
+claude follows the default provider as its single endpoint and ignores
+`contextWindow`/`maxTokens` (it knows its models); `models` still matters
+for the openai-side agents.
 
 ## Prompts
 

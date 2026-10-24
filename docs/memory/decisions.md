@@ -2,11 +2,31 @@
 
 Architecture decisions and their reasons, newest first.
 
+## claude: MCP merges into `~/.claude.json`, settings.json symlinks
+
+`settings.json` cannot carry MCP (no `mcpServers` in its schema); user-scope
+servers live in `~/.claude.json`, which is also claude's live state file
+(projects, onboarding). A store symlink would freeze its writes and a
+writable copy would clobber the state, so activation merges only our
+`mcpServers` key via jq. `settings.json` is read-only declarative config
+and symlinks fine.
+
+## claude agent: opt-in unfree, single endpoint from the default provider
+
+Claude Code speaks the Anthropic Messages API against one base URL - there
+is no provider grid in its config. The default provider renders as
+`ANTHROPIC_BASE_URL`/`model`/`apiKeyHelper` and must declare protocol
+`anthropic`. `ANTHROPIC_SMALL_FAST_MODEL` follows the default model: grid
+ids are not claude aliases, so the built-in haiku fallback would 404. The
+nixpkgs `claude-code` package is unfree, so `agents.claude.enable` defaults
+to false and this flake allows exactly `claude-code` in its own per-system
+pkgs (test-home, `.#claude-code`).
+
 ## Provider models are str-or-attrset with real context windows
 
 omp defaults any openai-compatible model to a 128k context - usually a lie.
 Provider `models` entries accept `{ id, contextWindow, maxTokens }` attrsets
-rendered into all three agents. The grid's `/v1/models`
+rendered into pi/omp/opencode (claude knows its models' windows). The grid's `/v1/models`
 (`max_input_tokens`/`max_output_tokens`) is the source of truth; bare
 strings still work when you do not care.
 

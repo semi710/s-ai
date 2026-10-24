@@ -73,6 +73,13 @@ in
       default = true;
       description = "pi coding agent (writes ~/.pi/agent)";
     };
+    # default off: pulls the unfree claude-code package - opt in and allow it
+    # in nixpkgs.config (or set agents.claude.package)
+    agents.claude.enable = lib.mkOption {
+      type = lib.types.bool;
+      default = false;
+      description = "claude agent (writes ~/.claude)";
+    };
 
     # A plugin is a portable unit of agent configuration: a skills directory,
     # environment variables, and per-harness loading hooks. Users can define
@@ -94,12 +101,14 @@ in
             skills.agents = lib.mkOption {
               type = lib.types.listOf (
                 lib.types.enum [
+                  "claude"
                   "opencode"
                   "pi"
                   "omp"
                 ]
               );
               default = [
+                "claude"
                 "opencode"
                 "pi"
                 "omp"
@@ -169,6 +178,16 @@ in
               type = lib.types.str;
               description = "env-var name holding the API key (never the key itself)";
             };
+            protocols = lib.mkOption {
+              type = lib.types.listOf (
+                lib.types.enum [
+                  "openai"
+                  "anthropic"
+                ]
+              );
+              default = [ "openai" ];
+              description = "wire protocols this endpoint serves; openai feeds pi/omp/opencode, anthropic feeds claude (a gateway may serve both)";
+            };
             timeout = lib.mkOption {
               type = lib.types.int;
               default = 600000;
@@ -176,9 +195,8 @@ in
             };
             models = lib.mkOption {
               type = lib.types.listOf (
-                lib.types.either
-                  lib.types.str
-                  (lib.types.submodule {
+                lib.types.either lib.types.str (
+                  lib.types.submodule {
                     options = {
                       id = lib.mkOption {
                         type = lib.types.str;
@@ -195,7 +213,8 @@ in
                         description = "max output tokens";
                       };
                     };
-                  })
+                  }
+                )
               );
               default = [ ];
               description = "model ids served by this provider; each is a bare id or an attrset with optional contextWindow/maxTokens";
@@ -254,6 +273,7 @@ in
   };
 
   imports = map (f: import f { inherit inputs; }) [
+    ./agents/claude.nix
     ./agents/omp.nix
     ./agents/pi.nix
     ./agents/opencode.nix
@@ -297,7 +317,10 @@ in
     # (e.g. a bitbucket server) land in every agent
     programs.mcp = {
       enable = lib.mkIf (
-        cfg.agents.opencode.enable || cfg.agents.omp.enable || cfg.agents.pi.enable
+        cfg.agents.opencode.enable
+        || cfg.agents.omp.enable
+        || cfg.agents.pi.enable
+        || cfg.agents.claude.enable
       ) true;
       servers = cfg.mcp.servers;
     };
