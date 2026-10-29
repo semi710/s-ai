@@ -182,6 +182,7 @@ in
                 m:
                 let
                   id = if builtins.isString m then m else m.id;
+                  mm = if builtins.isString m then null else m;
                 in
                 lib.nameValuePair id (
                   {
@@ -194,8 +195,14 @@ in
                       output = [ "text" ];
                     };
                   }
-                  // lib.optionalAttrs (if builtins.isString m then false else m.contextWindow != null) {
-                    contextWindow = if builtins.isString m then null else m.contextWindow;
+                  # opencode v2 renamed contextWindow -> limit; the schema
+                  # requires both context and output, so models missing either
+                  # fall back to opencode's models.dev catalog
+                  // lib.optionalAttrs (mm != null && mm.contextWindow != null && mm.maxTokens != null) {
+                    limit = {
+                      context = mm.contextWindow;
+                      output = mm.maxTokens;
+                    };
                   }
                 )
               ) p.models
