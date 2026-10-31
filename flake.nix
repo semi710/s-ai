@@ -19,7 +19,10 @@
     llm-agents.url = "github:numtide/llm-agents.nix";
 
     # opencode fork with vim-mode TUI patches
-    opencode-vim.url = "github:leohenon/opencode-vim/ocv";
+    # rev pin: the branch tip (ed83bb6, post-Oct-25) is hash-broken until
+    # the fork's next "update nix node_modules hashes" commit lands; 2432058fd
+    # is the last consistent rev. track the branch again once it builds
+    opencode-vim.url = "github:leohenon/opencode-vim/2432058fd";
 
     # vim motions for pi's input box, from our fork.
     # Flip to plain main after the bar-cursor PR merges.
