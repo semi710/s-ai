@@ -1,0 +1,64 @@
+name: flake-update
+
+# Weekly input bump: update flake.lock, prove the module still builds the
+# scratch consumer (nix build .#checks.x86_64-linux.home-activation), then
+# merge to master and delete the branch. A failed build aborts before any
+# commit is pushed, so a bad input never lands.
+on:
+  schedule:
+    - cron: "0 6 * * 1" # Mondays 06:00 UTC
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: flake-update
+  cancel-in-progress: false
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    timeout-minutes: 300
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: master
+          fetch-depth: 0
+
+      - uses: cachix/install-nix-action@v31
+        with:
+          extra_nix_config: |
+            experimental-features = nix-command flakes
+
+      - name: Update flake inputs
+        run: nix flake update
+
+      - name: Build checks
+        # same derivation as `nix build .#test-home`: every agent render plus
+        # the scratch home activation, so a broken input fails here
+        run: nix build .#checks.x86_64-linux.home-activation --no-link
+
+      - name: Commit, merge, delete branch
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          if git diff --quiet -- flake.lock; then
+            echo "flake.lock unchanged - inputs are already current"
+            exit 0
+          fi
+
+          branch="chore/flake-update-$(date -u +%Y%m%d)-${GITHUB_RUN_ID}"
+          git switch -c "$branch"
+          git add flake.lock
+          git commit -m "chore(flake): weekly input update"
+          git push origin "$branch"
+
+          git switch master
+          git merge --no-ff "$branch" -m "chore(flake): weekly input update"
+          git push origin master
+          git push origin --delete "$branch"
