@@ -75,13 +75,24 @@ in
     vimMotions = lib.mkOption {
       type = lib.types.bool;
       default = true;
-      description = "vim-motions-pi plugin (our fork): jk escape, yank syncs to the system clipboard via OSC 52";
+      description = "vim-motions-pi plugin (upstream v0.2.0): jk escape, yank syncs to the system clipboard via OSC 52. Scroll keys outside copy mode are pi keybindings, not plugin code";
     };
     clipboardCommand = lib.mkOption {
       type = lib.types.nullOr lib.types.str;
       default = null;
       example = lib.literalExpression "lib.getExe pkgs.copy";
       description = "OSC 52 clipboard command for vim-motions-pi (e.g. your copy tool); null disables clipboard sync";
+    };
+    copyMode = lib.mkOption {
+      type = lib.types.bool;
+      default = false;
+      description = "@luan.sh/pi-copy-mode + pi-xsettings: vim-style transcript selection, copying, and annotations; pi resolves npm deps at runtime";
+    };
+    extraPackages = lib.mkOption {
+      type = lib.types.listOf lib.types.str;
+      default = [ ];
+      example = [ "npm:pi-web-access@0.46.0" ];
+      description = "additional pi package specs (npm:..., git:..., or paths) appended to the packages list; version-pinned npm specs stay put on pi update";
     };
     extraSettings = lib.mkOption {
       type = lib.types.attrs;
@@ -99,14 +110,100 @@ in
       VIM_MOTION_PI_CLIPBOARD = "yank";
       VIM_MOTION_PI_CLIPBOARD_COMMAND = cfg.clipboardCommand;
     };
-    home.file = skillsMod.piFiles // {
-      # render pi's mcp.json ourselves - its onboarding-written file rots
-      # after GC. reads the same merged programs.mcp.servers as the other
-      # agents, so host-level additions land in pi too.
-      ".pi/agent/mcp.json".text = builtins.toJSON {
-        mcpServers = lib.mapAttrs (_: toPiServer) config.programs.mcp.servers;
+    home.file =
+      skillsMod.piFiles
+      // {
+        # render pi's mcp.json ourselves - its onboarding-written file rots
+        # after GC. reads the same merged programs.mcp.servers as the other
+        # agents, so host-level additions land in pi too.
+        ".pi/agent/mcp.json".text = builtins.toJSON {
+          mcpServers = lib.mapAttrs (_: toPiServer) config.programs.mcp.servers;
+        };
+      }
+      // lib.optionalAttrs (cfg.copyMode || cfg.vimMotions) {
+        # pi keybindings. vim-motions-pi is pinned to upstream (no fork), so the
+        # few scroll keys needed outside copy mode live here at pi's viewport
+        # layer: it runs before the editor in both modes, which also shadows
+        # app.exit so ctrl+d scrolls instead of quitting an empty prompt.
+        # copy-mode actions have no default keys, so enabling them disturbs
+        # nothing else.
+        ".pi/agent/keybindings.json".text = builtins.toJSON (
+          lib.optionalAttrs cfg.vimMotions {
+            "tui.altScreen.halfPageUp" = "ctrl+u";
+            "tui.altScreen.halfPageDown" = "ctrl+d";
+            "tui.altScreen.bottom" = "ctrl+g";
+          }
+          // lib.optionalAttrs cfg.copyMode {
+            # release ctrl+x from pi's whole-message copy; reserved bindings win
+            # over non-reserved ones on the same key until explicitly emptied
+            "app.message.copy" = [ ];
+            # free ctrl+p so it stops cycling models; reused as list nav below
+            "app.model.cycleForward" = [ ];
+            # list navigation in any select/picker (react picker, /command palette,
+            # model picker). ctrl+j/k arrive as raw \n/\v here and never match, so
+            # ctrl+n/p (emacs-style, unambiguous) are the bindings that count
+            "tui.select.up" = [
+              "up"
+              "ctrl+p"
+            ];
+            "tui.select.down" = [
+              "down"
+              "ctrl+n"
+            ];
+            "copy-mode.enter" = "ctrl+x";
+            "copy-mode.up" = [
+              "k"
+              "up"
+            ];
+            "copy-mode.down" = [
+              "j"
+              "down"
+            ];
+            "copy-mode.left" = [
+              "h"
+              "left"
+            ];
+            "copy-mode.right" = [
+              "l"
+              "right"
+            ];
+            "copy-mode.halfPageDown" = "ctrl+d";
+            "copy-mode.halfPageUp" = "ctrl+u";
+            "copy-mode.pageDown" = "ctrl+f";
+            "copy-mode.pageUp" = "ctrl+b";
+            "copy-mode.top" = "g";
+            "copy-mode.bottom" = "shift+g";
+            "copy-mode.lineStart" = "0";
+            "copy-mode.lineEnd" = "$";
+            "copy-mode.firstNonblank" = "^";
+            "copy-mode.wordForward" = "w";
+            "copy-mode.wordBackward" = "b";
+            "copy-mode.wordEnd" = "e";
+            "copy-mode.findForward" = "f";
+            "copy-mode.findBackward" = "F";
+            "copy-mode.repeatFind" = ";";
+            "copy-mode.reverseFind" = ",";
+            "copy-mode.paragraphForward" = "}";
+            "copy-mode.paragraphBackward" = "{";
+            "copy-mode.toggleSelection" = [
+              "v"
+              "space"
+            ];
+            "copy-mode.lineSelection" = "shift+v";
+            "copy-mode.columnSelection" = "ctrl+v";
+            "copy-mode.swapEnds" = "o";
+            "copy-mode.clearSelection" = [ ];
+            "copy-mode.copy" = "y";
+            "copy-mode.annotate" = "c";
+            "copy-mode.react" = "r";
+            "copy-mode.cancel" = [
+              "q"
+              "ctrl+c"
+              "escape"
+            ];
+          }
+        );
       };
-    };
 
     programs.pi-coding-agent = {
       enable = true;
@@ -125,7 +222,14 @@ in
           defaultThinkingLevel = "medium";
           theme = "dark";
           # plugin packages from s-ai.plugins (e.g. ponytail)
-          packages = piPackages ++ lib.optional cfg.vimMotions "${inputs.vim-motions-pi}";
+          packages =
+            piPackages
+            ++ lib.optional cfg.vimMotions "${inputs.vim-motions-pi}"
+            ++ lib.optionals cfg.copyMode [
+              "npm:@luan.sh/pi-copy-mode@0.3.4"
+              "npm:@luan.sh/pi-xsettings@0.3.7"
+            ]
+            ++ cfg.extraPackages;
         }
         cfg.extraSettings
       ];
