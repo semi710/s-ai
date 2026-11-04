@@ -24,9 +24,11 @@
     # is the last consistent rev. track the branch again once it builds
     opencode-vim.url = "github:leohenon/opencode-vim/2432058fd";
 
-    # vim motions for pi's input box, from our fork.
-    # Flip to plain main after the bar-cursor PR merges.
-    vim-motions-pi.url = "github:semi710/vim-motions-pi/feat/insert-mode-bar-cursor";
+    # vim motions for pi's input box. plain upstream v0.2.0 (bar-cursor PR
+    # merged); no fork. transcript copy/selection is pi-copy-mode's job, and
+    # the few scroll keys outside copy mode come from pi's keybindings.json
+    # so this stays on upstream main.
+    vim-motions-pi.url = "github:kepatrick/vim-motions-pi";
     vim-motions-pi.flake = false;
 
     # ponytail - lazy-dev skill plugin (vendored source, not a full flake)

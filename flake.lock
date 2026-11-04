@@ -561,16 +561,15 @@
     "vim-motions-pi": {
       "flake": false,
       "locked": {
-        "lastModified": 1788865932,
-        "narHash": "sha256-tdI1EBQS5Si7wir4iBav+oeoHZxXdfVpsdC8XpnKVgk=",
-        "owner": "semi710",
+        "lastModified": 1793247534,
+        "narHash": "sha256-Oo62rd3Zio1wyyXuTLG8dsMWBGkSyYW7KSyn9FOZcF0=",
+        "owner": "kepatrick",
         "repo": "vim-motions-pi",
-        "rev": "e338e61e6accff83d8f5c78566bdc7d8037b0e4c",
+        "rev": "d3918383ee557a70cee83ddbc03d3de9903a610e",
         "type": "github"
       },
       "original": {
-        "owner": "semi710",
-        "ref": "feat/insert-mode-bar-cursor",
+        "owner": "kepatrick",
         "repo": "vim-motions-pi",
         "type": "github"
       }
