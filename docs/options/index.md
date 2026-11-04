@@ -19,7 +19,9 @@ config under `s-ai.*`; secrets never enter the store (only env-var names).
 | `s-ai.agents.omp.memory` | `true` | local SQLite per-project memory |
 | `s-ai.agents.omp.extraSettings` | `{}` | deep-merges last into omp settings |
 | `s-ai.agents.pi.enable` | `true` | pi |
-| `s-ai.agents.pi.vimMotions` | `true` | vim-motions-pi plugin |
+| `s-ai.agents.pi.vimMotions` | `true` | vim-motions-pi plugin (upstream) |
+| `s-ai.agents.pi.copyMode` | `false` | pi-copy-mode + pi-xsettings |
+| `s-ai.agents.pi.extraPackages` | `[]` | extra pi package specs (npm:, git:, paths) |
 | `s-ai.agents.pi.clipboardCommand` | `null` | OSC 52 command for vim-motions |
 | `s-ai.agents.pi.extraSettings` | `{}` | deep-merges last into pi settings |
 | `s-ai.agents.claude.enable` | `false` | claude (opt-in: unfree claude-code) |

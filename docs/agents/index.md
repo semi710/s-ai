@@ -53,7 +53,13 @@ Options:
 ## pi
 
 - `programs.pi-coding-agent` upstream module
-- vim-motions-pi plugin (optional) for `jk` escape + OSC 52 yank
+- vim-motions-pi plugin (optional, upstream pin) for `jk` escape + OSC 52 yank
+- pi-copy-mode + pi-xsettings (optional) for vim-style transcript selection,
+  copy, comments and reactions (`ctrl+x`, then `v`/`y`)
+- scroll keys outside copy mode (`ctrl+d`/`ctrl+u` half page, `ctrl+g` bottom)
+  are pi-native `keybindings.json` entries, not plugin code; viewport-level, so
+  they work in insert mode too and shadow pi's `ctrl+d` quit
+- `~/.pi/agent/keybindings.json` rendered declaratively (store symlink)
 - mcp.json rendered with pi's `lifecycle = "keep-alive"` + `directTools = true` keys, and the canonical `type = "remote"` translated to `{ url, headers? }` (pi rejects `type = "remote"`)
 
 Options:
@@ -61,7 +67,9 @@ Options:
 | Option | Default | Description |
 |---|---|---|
 | `s-ai.agents.pi.enable` | `true` | pi |
-| `s-ai.agents.pi.vimMotions` | `true` | vim-motions-pi plugin |
+| `s-ai.agents.pi.vimMotions` | `true` | vim-motions-pi plugin (upstream) |
+| `s-ai.agents.pi.copyMode` | `false` | pi-copy-mode + pi-xsettings (transcript copy, annotations) |
+| `s-ai.agents.pi.extraPackages` | `[]` | extra pi package specs (npm:, git:, paths) |
 | `s-ai.agents.pi.clipboardCommand` | `null` | OSC 52 command (e.g. `pkgs.copy`) |
 | `s-ai.agents.pi.extraSettings` | `{}` | deep-merged last into pi settings |
 
@@ -90,3 +98,28 @@ Options:
 
 All agents share the same canonical prompts (`AGENTS.md`/`CLAUDE.md`),
 skills (per-plugin routing), MCP servers, providers, and (for omp) theme.
+
+## Pi Durable (watchlist - not integrated)
+
+[Pi Durable](https://earendil.com/posts/pi-durable/) (`@earendil-works/pi-durable`)
+is an experimental framework for building durable agent apps: checkpointed tasks
+that survive crashes and replay only when `replay: "safe"`, forking with shared
+transcript, an ownership tree for foreground/background work, background
+compaction, and multi-client steering. It is **not an agent and not a config
+layer** - there is nothing for s-ai to render; adopting it means building and
+maintaining a TypeScript app.
+
+Not integrated on purpose: the API is explicitly unstable, storage is
+single-writer (one process owns it, clients attach), it is TypeScript-only, and
+the announced first real apps (Slack bot, GitHub triage bot) had not shipped at
+time of writing.
+
+TODO(pi-durable): reassess when either of these lands -
+1. the promised Slack/GitHub triage bots ship (signals API stabilization), or
+2. a concrete workload appears that must survive process death mid-tool-call
+   (scheduled job, chat-surface bot, unattended long run).
+
+If (2) happens, spike first: run `packages/coding-agent/src/experimental/vacation/main.ts`
+from a pi `v1.0.0` checkout, kill the process mid-search, restart, confirm only
+unsafe tasks rerun. Keep any resulting app in its own repo + nix derivation
+(bun app), never inside this module.

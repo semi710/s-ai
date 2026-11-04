@@ -55,7 +55,9 @@ your own build via `s-ai.agents.claude.package`.
 | `s-ai.agents.omp.smolModel` | `null` | model id for the smol role - prewalk execution, commits, background tasks (unarmed when null) |
 | `s-ai.agents.omp.memory` | `true` | local SQLite per-project memory (mnemopi) |
 | `s-ai.agents.omp.extraSettings` | `{}` | deep-merged last into `programs.omp.settings` |
-| `s-ai.agents.pi.vimMotions` | `true` | vim-motions-pi plugin (jk escape, OSC 52 yank) |
+| `s-ai.agents.pi.vimMotions` | `true` | vim-motions-pi plugin upstream (jk escape, OSC 52 yank) |
+| `s-ai.agents.pi.copyMode` | `false` | pi-copy-mode + pi-xsettings (vim transcript copy/annotations) |
+| `s-ai.agents.pi.extraPackages` | `[]` | extra pi package specs (npm:, git:, paths) |
 | `s-ai.agents.pi.clipboardCommand` | `null` | OSC 52 command for vim-motions (your `copy` tool) |
 | `s-ai.agents.pi.extraSettings` | `{}` | deep-merged last into pi settings |
 | `s-ai.agents.claude.enable` | `false` | claude (writes `~/.claude`) - opt-in, unfree package |
