@@ -145,6 +145,11 @@ in
               default = null;
               description = "pi package spec (e.g. git:github.com/...) loading this plugin (skips skills symlink for pi)";
             };
+            packages = lib.mkOption {
+              type = lib.types.listOf lib.types.package;
+              default = [ ];
+              description = "packages installed while this plugin is enabled";
+            };
           };
         }
       );
@@ -303,10 +308,14 @@ in
         enable = lib.mkDefault true;
         skills.dir = lib.mkDefault "${inputs.claude-code}/plugins/frontend-design/skills";
       };
-      # worktree/tmux workflow skills
+      # worktree/tmux workflow: skills + the binary, one rev via the
+      # consumer's follows (ndots pins s-ai.inputs.workmux = workmux)
       workmux = {
         enable = lib.mkDefault false;
         skills.dir = lib.mkDefault "${inputs.workmux}/skills";
+        packages = lib.mkDefault [
+          inputs.workmux.packages.${pkgs.stdenv.hostPlatform.system}.default
+        ];
       };
     };
 
@@ -327,5 +336,6 @@ in
 
     # plugin envs apply while the plugin is enabled
     home.sessionVariables = lib.concatMapAttrs (_: p: p.env) enabledPlugins;
+    home.packages = lib.concatLists (lib.mapAttrsToList (_: p: p.packages) enabledPlugins);
   };
 }
