@@ -125,7 +125,7 @@ as its single endpoint.
 
 Every agent's `AGENTS.md` is the sorted concatenation of numbered markdown
 files. s-ai ships the builtin set (01-git, 02-before-you-code,
-03-code-comments, 04-docs, 05-nix); add your own rules or override builtin
+03-code-comments, 04-docs, 05-nix, 06-fixes); add your own rules or override builtin
 files by name:
 
 ```nix

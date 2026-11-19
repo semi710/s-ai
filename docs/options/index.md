@@ -117,8 +117,8 @@ for the openai-side agents.
 
 Every agent's `AGENTS.md` is the sorted concatenation of numbered markdown
 files. s-ai ships the builtin set (01-git, 02-before-you-code,
-03-code-comments, 04-docs, 05-nix); add your own rules or override builtin
-files by name.
+03-code-comments, 04-docs, 05-nix, 06-fixes); add your own rules or override
+builtin files by name.
 
 ```nix
 s-ai.prompts.dirs = [ ./my-prompts ];     # 06-docker.md, 90-team-rules.md, ...
