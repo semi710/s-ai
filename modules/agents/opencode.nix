@@ -34,9 +34,9 @@ let
     )
   );
 
-  # stylix's opencode target drops the theme name into programs.opencode.tui
-  # (the v1 tui.json shape); v2 reads cli.json instead, so the render below
-  # bridges it across
+  # stylix's opencode target dropped the theme name into the v1
+  # programs.opencode.tui; v2 warns when tui is set and reads the theme
+  # from themes.<name> instead
   tuiTheme =
     if
       config.programs ? opencode
@@ -44,6 +44,12 @@ let
       && config.programs.opencode.tui ? theme
     then
       config.programs.opencode.tui.theme
+    else if
+      config.programs ? opencode
+      && config.programs.opencode ? themes
+      && config.programs.opencode.themes ? stylix
+    then
+      "stylix"
     else
       null;
 
