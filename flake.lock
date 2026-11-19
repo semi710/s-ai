@@ -293,11 +293,11 @@
     },
     "nixpkgs_2": {
       "locked": {
-        "lastModified": 1791366222,
-        "narHash": "sha256-o0N4g6uSOIppU7CGToNvGlMf5vC+B6O6ukFHKY/TKOY=",
+        "lastModified": 1794840529,
+        "narHash": "sha256-ySrWnmZB5UsZTYGHHnBjllT05O5iFjElCRS+mabtfP0=",
         "owner": "NixOS",
         "repo": "nixpkgs",
-        "rev": "39ad350a0602fa0a58a544344e3e9187526ea45c",
+        "rev": "e21fec321d73511849707a7585e4ea155ee4bf40",
         "type": "github"
       },
       "original": {
@@ -340,6 +340,22 @@
       }
     },
     "nixpkgs_5": {
+      "locked": {
+        "lastModified": 1790510107,
+        "narHash": "sha256-EVMNYv7hYDDD9TGVT/hIyTYgpiXA8y3m5xIEIxuGNU0=",
+        "owner": "NixOS",
+        "repo": "nixpkgs",
+        "rev": "3181085bfd08663b6b9e60bc7a8395c2aaa741bd",
+        "type": "github"
+      },
+      "original": {
+        "owner": "NixOS",
+        "ref": "nixpkgs-unstable",
+        "repo": "nixpkgs",
+        "type": "github"
+      }
+    },
+    "nixpkgs_6": {
       "locked": {
         "lastModified": 1787900134,
         "narHash": "sha256-VYXO0XZlgj06dxJZRhrD3WoSsvq/c7+/Akyoa22pefw=",
@@ -397,6 +413,25 @@
         "type": "github"
       }
     },
+    "opencode-vim-latest": {
+      "inputs": {
+        "nixpkgs": "nixpkgs_5"
+      },
+      "locked": {
+        "lastModified": 1792947984,
+        "narHash": "sha256-gMRoGdzJmGkZiXzeC7eHun/de57hH2xJjAWdx6JuFQo=",
+        "owner": "leohenon",
+        "repo": "opencode-vim",
+        "rev": "26ff3c5bd87395c78d64b84f6d9ce8662f3abfb6",
+        "type": "github"
+      },
+      "original": {
+        "owner": "leohenon",
+        "ref": "v2.1.4-ocv.4.15",
+        "repo": "opencode-vim",
+        "type": "github"
+      }
+    },
     "ponytail": {
       "flake": false,
       "locked": {
@@ -422,6 +457,7 @@
         "nixpkgs": "nixpkgs_2",
         "omp": "omp",
         "opencode-vim": "opencode-vim",
+        "opencode-vim-latest": "opencode-vim-latest",
         "ponytail": "ponytail",
         "vim-motions-pi": "vim-motions-pi",
         "workmux": "workmux"
@@ -576,7 +612,7 @@
     },
     "workmux": {
       "inputs": {
-        "nixpkgs": "nixpkgs_5"
+        "nixpkgs": "nixpkgs_6"
       },
       "locked": {
         "lastModified": 1791143345,

@@ -34,6 +34,19 @@ let
     )
   );
 
+  # stylix's opencode target drops the theme name into programs.opencode.tui
+  # (the v1 tui.json shape); v2 reads cli.json instead, so the render below
+  # bridges it across
+  tuiTheme =
+    if
+      config.programs ? opencode
+      && config.programs.opencode ? tui
+      && config.programs.opencode.tui ? theme
+    then
+      config.programs.opencode.tui.theme
+    else
+      null;
+
   # Unified OMO config (~/.omo/omo.jsonc). The file is a read-only hm store
   # symlink, so OMO's migrations cannot write it and wedge their journal on
   # every boot - pre-mark each migration id in _migrations (new ids show up
@@ -97,6 +110,11 @@ in
       default = { };
       description = "attrs deep-merged last into programs.opencode.settings";
     };
+    extraCliSettings = lib.mkOption {
+      type = lib.types.attrs;
+      default = { };
+      description = "attrs deep-merged last into the rendered v2 cli.json";
+    };
     extraOmoConfig = lib.mkOption {
       type = lib.types.attrs;
       default = { };
@@ -119,6 +137,28 @@ in
       skillsMod.files
       // {
         ".config/opencode/AGENTS.md".text = combinedSystemPrompt;
+        # v2 reads cli.json; our home-manager pin renders only the v1-named
+        # tui.json, so the terminal-client config is rendered here until
+        # home-manager ships programs.opencode.cli
+        ".config/opencode/cli.json".text = builtins.toJSON (
+          lib.recursiveUpdate
+            (
+              {
+                "$schema" = "https://opencode.ai/v2/cli.json";
+                plugins = opencodePlugins ++ lib.optional cfg.omo "oh-my-openagent";
+                scroll.acceleration = true;
+                vim = true;
+                vim_escape_sequence = "jk";
+                vim_enter_submit = true;
+                vim_insert_after_submit = true;
+                vim_system_clipboard_register = true;
+              }
+              // lib.optionalAttrs (tuiTheme != null) {
+                theme = if builtins.isAttrs tuiTheme then tuiTheme else { name = tuiTheme; };
+              }
+            )
+            cfg.extraCliSettings
+        );
       }
       // lib.optionalAttrs cfg.omo {
         # oh-my-openagent's lib dir - read-only, fine as a store symlink
@@ -145,7 +185,28 @@ in
       enable = true;
       package =
         let
-          pkg = inputs.opencode-vim.packages.${pkgs.stdenv.hostPlatform.system}.default;
+          # darwin runs the latest ocv release with the CLI renamed back at
+          # build: the fork bakes `ocv` into the binary (build.ts consts ->
+          # OPENCODE_CLI_NAME/PRODUCT_NAME), which moves config/auth/data to
+          # ~/.config/ocv. Its nix/hashes.json is stale (hash bot stalled at
+          # the port), so node_modules carries a fresh hash. Other systems
+          # stay on the consistent opencode-named pin.
+          pkg =
+            if pkgs.stdenv.hostPlatform.system == "aarch64-darwin" then
+              (pkgs.callPackage "${inputs.opencode-vim-latest}/nix/opencode.nix" {
+                node_modules = pkgs.callPackage "${inputs.opencode-vim-latest}/nix/node_modules.nix" {
+                  rev = inputs.opencode-vim-latest.shortRev or "dirty";
+                  hash = "sha256-Mxx5tPv6cCF+FTOIuMaXNEr1lLBODf7KuzAsEnKSn2E=";
+                };
+              }).overrideAttrs (old: {
+                postPatch = (old.postPatch or "") + ''
+                  substituteInPlace packages/cli/script/build.ts \
+                    --replace-fail 'const cliName = "ocv"' 'const cliName = "opencode"' \
+                    --replace-fail 'const productName = "ocv"' 'const productName = "opencode"'
+                '';
+              })
+            else
+              inputs.opencode-vim.packages.${pkgs.stdenv.hostPlatform.system}.default;
         in
         # upstream build.ts ad-hoc re-signs darwin binaries (macOS 27+) but
         # stdenvNoCC has no codesign on PATH; sigtool provides codesign,
@@ -235,14 +296,6 @@ in
         }
         cfg.extraSettings
       ];
-      tui = {
-        vim_system_clipboard_register = true;
-        vim_escape_sequence = "jk";
-        vim_enter_submit = true;
-        vim_insert_after_submit = true;
-        scroll_acceleration.enabled = true;
-        plugin = opencodePlugins ++ lib.optional cfg.omo "oh-my-openagent";
-      };
     };
   };
 }

@@ -18,11 +18,16 @@
     # pi + oh-my-opencode packages
     llm-agents.url = "github:numtide/llm-agents.nix";
 
-    # opencode fork with vim-mode TUI patches
-    # rev pin: the branch tip (ed83bb6, post-Oct-25) is hash-broken until
-    # the fork's next "update nix node_modules hashes" commit lands; 2432058fd
-    # is the last consistent rev. track the branch again once it builds
+    # opencode fork with vim-mode TUI patches. 2432058fd is already the
+    # v2 port plus its hash fix, with the CLI still named `opencode`. rev
+    # pin: the fork's v2 release renamed the CLI to `ocv` (build.ts cliName
+    # const), which relocates config/auth/data to ~/.config/ocv and drops
+    # everything in ~/.config/opencode; systems without a fresh FOD hash
+    # below stay on this rev
     opencode-vim.url = "github:leohenon/opencode-vim/2432058fd";
+    # the ocv-named release line (latest); darwin builds it with the CLI
+    # name patched back to `opencode` (modules/agents/opencode.nix)
+    opencode-vim-latest.url = "github:leohenon/opencode-vim/v2.1.4-ocv.4.15";
 
     # vim motions for pi's input box. plain upstream v0.2.0 (bar-cursor PR
     # merged); no fork. transcript copy/selection is pi-copy-mode's job, and
