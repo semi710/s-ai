@@ -18,16 +18,8 @@
     # pi + oh-my-opencode packages
     llm-agents.url = "github:numtide/llm-agents.nix";
 
-    # opencode fork with vim-mode TUI patches. 2432058fd is already the
-    # v2 port plus its hash fix, with the CLI still named `opencode`. rev
-    # pin: the fork's v2 release renamed the CLI to `ocv` (build.ts cliName
-    # const), which relocates config/auth/data to ~/.config/ocv and drops
-    # everything in ~/.config/opencode; systems without a fresh FOD hash
-    # below stay on this rev
-    opencode-vim.url = "github:leohenon/opencode-vim/2432058fd";
-    # the ocv-named release line (latest); darwin builds it with the CLI
-    # name patched back to `opencode` (modules/agents/opencode.nix)
-    opencode-vim-latest.url = "github:leohenon/opencode-vim/v2.1.4-ocv.4.15";
+    # opencode (vim-mode fork) is fetched as a pre-built release binary;
+    # see packages/opencode-release.nix for version + per-platform hashes
 
     # vim motions for pi's input box. plain upstream v0.2.0 (bar-cursor PR
     # merged); no fork. transcript copy/selection is pi-copy-mode's job, and
@@ -94,7 +86,7 @@
           packages = {
             omp = inputs'.omp.packages.default;
             pi = inputs'.llm-agents.packages.pi;
-            opencode = inputs'.opencode-vim.packages.default;
+            opencode = (pkgs.callPackage ./packages/opencode-release.nix { });
             oh-my-opencode = inputs'.llm-agents.packages.oh-my-opencode;
             claude-code = pkgs.claude-code;
             default = inputs'.omp.packages.default;

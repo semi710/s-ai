@@ -194,43 +194,7 @@ in
 
     programs.opencode = {
       enable = true;
-      package =
-        let
-          # darwin runs the latest ocv release with the CLI renamed back at
-          # build: the fork bakes `ocv` into the binary (build.ts consts ->
-          # OPENCODE_CLI_NAME/PRODUCT_NAME), which moves config/auth/data to
-          # ~/.config/ocv. Its nix/hashes.json is stale (hash bot stalled at
-          # the port), so node_modules carries a fresh hash. Other systems
-          # stay on the consistent opencode-named pin.
-          pkg =
-            if pkgs.stdenv.hostPlatform.system == "aarch64-darwin" then
-              (pkgs.callPackage "${inputs.opencode-vim-latest}/nix/opencode.nix" {
-                node_modules = pkgs.callPackage "${inputs.opencode-vim-latest}/nix/node_modules.nix" {
-                  rev = inputs.opencode-vim-latest.shortRev or "dirty";
-                  hash = "sha256-Mxx5tPv6cCF+FTOIuMaXNEr1lLBODf7KuzAsEnKSn2E=";
-                };
-              }).overrideAttrs (old: {
-                postPatch = (old.postPatch or "") + ''
-                  substituteInPlace packages/cli/script/build.ts \
-                    --replace-fail 'const cliName = "ocv"' 'const cliName = "opencode"' \
-                    --replace-fail 'const productName = "ocv"' 'const productName = "opencode"'
-                '';
-              })
-            else
-              inputs.opencode-vim.packages.${pkgs.stdenv.hostPlatform.system}.default;
-        in
-        # upstream build.ts ad-hoc re-signs darwin binaries (macOS 27+) but
-        # stdenvNoCC has no codesign on PATH; sigtool provides codesign,
-        # cctools its codesign_allocate helper
-        if pkgs.stdenv.hostPlatform.isDarwin then
-          pkg.overrideAttrs (old: {
-            nativeBuildInputs = (old.nativeBuildInputs or [ ]) ++ [
-              pkgs.darwin.sigtool
-              pkgs.cctools
-            ];
-          })
-        else
-          pkg;
+      package = inputs.self.packages.${pkgs.stdenv.hostPlatform.system}.opencode;
       enableMcpIntegration = true;
       web = {
         enable = lib.mkDefault false;
