@@ -49,6 +49,15 @@ stdenvNoCC.mkDerivation {
   dontBuild = true;
   dontUnpack = true;
 
+  # bun --compile keeps the 8-byte BUN_COMPILED payload pointer in a gap
+  # no section header covers (the .bun header is repointed at the embedded
+  # payload). GNU strip rewrites the ELF through BFD and drops gap content,
+  # zeroing that pointer, so the binary boots as plain bun (bun's help
+  # text) instead of opencode. autoPatchelfHook propagates binutils-wrapper,
+  # which arms the otherwise-inert stdenvNoCC strip phase - keep strip away.
+  # Without the hook nothing strips, which is why the darwin build is fine.
+  dontStrip = true;
+
   installPhase = ''
     runHook preInstall
     mkdir -p $out/bin
