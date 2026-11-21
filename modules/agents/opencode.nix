@@ -111,6 +111,11 @@ in
       default = true;
       description = "oh-my-openagent plugin (Sisyphus agent system, team mode, subagents)";
     };
+    claudeAuth = lib.mkOption {
+      type = lib.types.bool;
+      default = true;
+      description = "opencode-claude-auth plugin: adds \"Import Claude Code subscription\" to /connect > Anthropic, so opencode reads the OAuth token from Claude Code's credential store instead of an API key";
+    };
     extraSettings = lib.mkOption {
       type = lib.types.attrs;
       default = { };
@@ -151,7 +156,7 @@ in
             (
               {
                 "$schema" = "https://opencode.ai/v2/cli.json";
-                plugins = opencodePlugins ++ lib.optional cfg.omo "oh-my-openagent";
+                plugins = opencodePlugins ++ lib.optional cfg.omo "oh-my-openagent" ++ lib.optional cfg.claudeAuth "opencode-claude-auth@latest";
                 scroll.acceleration = true;
                 vim = true;
                 vim_escape_sequence = "jk";
@@ -290,7 +295,7 @@ in
             list = "allow";
             bash = bashPermissions;
           };
-          plugin = opencodePlugins ++ lib.optional cfg.omo "oh-my-openagent";
+          plugin = opencodePlugins ++ lib.optional cfg.omo "oh-my-openagent" ++ lib.optional cfg.claudeAuth "opencode-claude-auth@latest";
           default_agent = "sisyphus";
           agent = {
             sisyphus = {
