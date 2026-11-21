@@ -136,6 +136,10 @@ in
   config = lib.mkIf cfg.enable {
     home.sessionVariables = {
       OPENCODE_ENABLE_EXA = 1;
+      # the pre-built release is channel=ocv, so v2 keys its config root off
+      # ~/.config/ocv while home-manager renders into ~/.config/opencode;
+      # point the binary back at the rendered root instead of re-rendering
+      OPENCODE_CONFIG_DIR = "$HOME/.config/opencode";
     };
 
     home.packages = [
