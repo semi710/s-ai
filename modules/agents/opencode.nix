@@ -131,6 +131,21 @@ in
       default = { };
       description = "attrs deep-merged last into the OMO ~/.omo/omo.jsonc config";
     };
+    autoApprove = lib.mkOption {
+      type = lib.types.listOf lib.types.str;
+      default = [
+        "websearch"
+        "webfetch"
+      ];
+      description = ''
+        Permission actions allowed without prompting. Each entry becomes a
+        native v2 rule (action, resource "*", allow) appended after
+        extraSettings; evaluation is last-match-wins, so these stand over
+        the v1 permission map and consumer rules. "*" allows everything -
+        edits, unlisted shell commands - and also overrides the curated
+        .env read/grep asks, so prefer specific actions.
+      '';
+    };
   };
 
   config = lib.mkIf cfg.enable {
@@ -274,6 +289,15 @@ in
           };
         }
         cfg.extraSettings
+        {
+          # final merge branch: these rules land after every other
+          # permissions list; v2 evaluation is last-match-wins
+          permissions = map (action: {
+            inherit action;
+            resource = "*";
+            effect = "allow";
+          }) cfg.autoApprove;
+        }
       ];
     };
   };
