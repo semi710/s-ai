@@ -3,14 +3,9 @@
 # apply everywhere. Directories merge in order: a file with the same name in
 # a later directory replaces the earlier one, then everything sorts by
 # filename and concatenates.
-lib:
-dirs:
+lib: dirs:
 let
-  mdFiles =
-    dir:
-    lib.filter (f: lib.hasSuffix ".md" f) (
-      builtins.attrNames (builtins.readDir dir)
-    );
+  mdFiles = dir: lib.filter (f: lib.hasSuffix ".md" f) (builtins.attrNames (builtins.readDir dir));
 
   # filename -> path, later dirs win on name collisions
   merged = lib.foldl (acc: dir: acc // (lib.genAttrs (mdFiles dir) (f: dir + "/${f}"))) { } dirs;
