@@ -24,6 +24,30 @@ let
   defaultProvider = config.s-ai.providers.${config.s-ai.defaultProvider};
   defaultModel = "${config.s-ai.defaultProvider}/${defaultProvider.defaultModel}";
 
+  # Per-role routing: one heavy model can plan/review while a cheaper one
+  # executes. Empty role = inherit defaultModel.
+  roleModel =
+    role:
+    let
+      m = cfg.models.${role} or "";
+    in
+    if m == "" then defaultModel else m;
+  # OMO agent -> role. metis/momus are the pre-beta.51 planner/reviewer
+  # names, plan-consultant/plan-reviewer their 5.x replacements.
+  agentRoles = {
+    sisyphus = "main";
+    prometheus = "planner";
+    metis = "planner";
+    oracle = "planner";
+    momus = "reviewer";
+    atlas = "executor";
+    hephaestus = "executor";
+    sisyphus-junior = "executor";
+    explore = "explorer";
+    librarian = "explorer";
+    multimodal-looker = "vision";
+  };
+
   omoPkg = inputs.llm-agents.packages.${pkgs.stdenv.hostPlatform.system}.oh-my-opencode;
   bashPermissions = builtins.fromJSON (builtins.readFile ../bash-permissions.json);
 
@@ -39,9 +63,7 @@ let
   # from themes.<name> instead
   tuiTheme =
     if
-      config.programs ? opencode
-      && config.programs.opencode ? tui
-      && config.programs.opencode.tui ? theme
+      config.programs ? opencode && config.programs.opencode ? tui && config.programs.opencode.tui ? theme
     then
       config.programs.opencode.tui.theme
     else if
@@ -67,28 +89,13 @@ let
         enabled = true;
         tmux_visualization = true;
       };
-      agents =
-        lib.genAttrs
-          [
-            "sisyphus"
-            "metis"
-            "prometheus"
-            "atlas"
-            "hephaestus"
-            "oracle"
-            "momus"
-            "explore"
-            "librarian"
-            "multimodal-looker"
-            "sisyphus-junior"
-          ]
-          (
-            name:
-            {
-              model = defaultModel;
-            }
-            // lib.optionalAttrs (name == "hephaestus") { allow_non_gpt_model = true; }
-          );
+      agents = lib.mapAttrs (
+        name: role:
+        {
+          model = roleModel role;
+        }
+        // lib.optionalAttrs (name == "hephaestus") { allow_non_gpt_model = true; }
+      ) agentRoles;
     };
     # every id oh-my-openagent's registry currently defines (grep
     # MIGRATION_ID in its dist when a new one toasts): the config is a
@@ -131,6 +138,17 @@ in
       default = { };
       description = "attrs deep-merged last into the OMO ~/.omo/omo.jsonc config";
     };
+    models = lib.mkOption {
+      type = lib.types.attrsOf lib.types.str;
+      default = { };
+      description = ''
+        Per-role model ids (provider/model); unset roles inherit defaultModel.
+        Roles: main (sisyphus + settings.model), planner (prometheus, metis,
+        oracle), reviewer (momus), executor (atlas, hephaestus,
+        sisyphus-junior), explorer (explore, librarian), vision
+        (multimodal-looker).
+      '';
+    };
     autoApprove = lib.mkOption {
       type = lib.types.listOf lib.types.str;
       default = [
@@ -171,23 +189,24 @@ in
         # tui.json, so the terminal-client config is rendered here until
         # home-manager ships programs.opencode.cli
         ".config/opencode/cli.json".text = builtins.toJSON (
-          lib.recursiveUpdate
-            (
-              {
-                "$schema" = "https://opencode.ai/v2/cli.json";
-                plugins = opencodePlugins ++ lib.optional cfg.omo "oh-my-openagent" ++ lib.optional cfg.claudeAuth "opencode-claude-auth@latest";
-                scroll.acceleration = true;
-                vim = true;
-                vim_escape_sequence = "jk";
-                vim_enter_submit = true;
-                vim_insert_after_submit = true;
-                vim_system_clipboard_register = true;
-              }
-              // lib.optionalAttrs (tuiTheme != null) {
-                theme = if builtins.isAttrs tuiTheme then tuiTheme else { name = tuiTheme; };
-              }
-            )
-            cfg.extraCliSettings
+          lib.recursiveUpdate (
+            {
+              "$schema" = "https://opencode.ai/v2/cli.json";
+              plugins =
+                opencodePlugins
+                ++ lib.optional cfg.omo "oh-my-openagent"
+                ++ lib.optional cfg.claudeAuth "opencode-claude-auth@latest";
+              scroll.acceleration = true;
+              vim = true;
+              vim_escape_sequence = "jk";
+              vim_enter_submit = true;
+              vim_insert_after_submit = true;
+              vim_system_clipboard_register = true;
+            }
+            // lib.optionalAttrs (tuiTheme != null) {
+              theme = if builtins.isAttrs tuiTheme then tuiTheme else { name = tuiTheme; };
+            }
+          ) cfg.extraCliSettings
         );
       }
       // lib.optionalAttrs cfg.omo {
@@ -222,7 +241,7 @@ in
       settings = lib.mkMerge [
         {
           autoupdate = true;
-          model = defaultModel;
+          model = roleModel "main";
           # opencode provider format: { name, modalities, ... } per model
           provider = lib.mapAttrs (name: p: {
             npm = "@ai-sdk/openai-compatible";
@@ -278,7 +297,10 @@ in
             list = "allow";
             bash = bashPermissions;
           };
-          plugin = opencodePlugins ++ lib.optional cfg.omo "oh-my-openagent" ++ lib.optional cfg.claudeAuth "opencode-claude-auth@latest";
+          plugin =
+            opencodePlugins
+            ++ lib.optional cfg.omo "oh-my-openagent"
+            ++ lib.optional cfg.claudeAuth "opencode-claude-auth@latest";
           default_agent = "sisyphus";
           agent = {
             sisyphus = {
