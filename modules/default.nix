@@ -303,10 +303,10 @@ in
         opencodePlugin = lib.mkDefault "${inputs.ponytail}/.opencode/plugins/ponytail.mjs";
         piPackage = lib.mkDefault "git:github.com/DietrichGebert/ponytail";
       };
-      # frontend-design skill, vendored from claude-code
+      # frontend-design skill, from the official plugins repo
       claude-code = {
         enable = lib.mkDefault true;
-        skills.dir = lib.mkDefault "${inputs.claude-code}/plugins/frontend-design/skills";
+        skills.dir = lib.mkDefault "${inputs.claude-plugins}/plugins/frontend-design/skills";
       };
       # worktree/tmux workflow: skills + the binary, one rev via the
       # consumer's follows (ndots pins s-ai.inputs.workmux = workmux)

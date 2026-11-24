@@ -36,8 +36,9 @@
     workmux.url = "github:raine/workmux";
 
     # external skill sources, tracked rev+narHash by the lock
-    claude-code.url = "github:anthropics/claude-code";
-    claude-code.flake = false;
+    # claude-code dropped its plugins/ dir; frontend-design moved here
+    claude-plugins.url = "github:anthropics/claude-plugins-official";
+    claude-plugins.flake = false;
   };
 
   outputs =

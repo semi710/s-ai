@@ -82,19 +82,19 @@
         "type": "github"
       }
     },
-    "claude-code": {
+    "claude-plugins": {
       "flake": false,
       "locked": {
-        "lastModified": 1791435816,
-        "narHash": "sha256-m3yPhZdwe5VVhA5ap71wMR+oA4CCLV4teDWaY7neUJQ=",
+        "lastModified": 1795478020,
+        "narHash": "sha256-RgRJXQWhAUkCM0xNrJt2WVwkN47JV005CF8IK9wMZhg=",
         "owner": "anthropics",
-        "repo": "claude-code",
-        "rev": "71cdddec623889d38af14b7a489670a03186f659",
+        "repo": "claude-plugins-official",
+        "rev": "5cec6716767283f4675a05f5f8855b5b49c81783",
         "type": "github"
       },
       "original": {
         "owner": "anthropics",
-        "repo": "claude-code",
+        "repo": "claude-plugins-official",
         "type": "github"
       }
     },
@@ -380,7 +380,7 @@
     },
     "root": {
       "inputs": {
-        "claude-code": "claude-code",
+        "claude-plugins": "claude-plugins",
         "flake-parts": "flake-parts",
         "home-manager": "home-manager",
         "llm-agents": "llm-agents",
